@@ -46,6 +46,8 @@ const main = async () => {
   }
 
   landmarksRealTime(video);
+
+  startGame();
 }
 
 

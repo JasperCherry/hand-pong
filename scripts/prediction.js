@@ -15,6 +15,10 @@ const getCentralHandPoint = (result) => {
   return point;
 };
 
+let counter = 0;
+
+let centalHandPoint;
+
 const landmarksRealTime = async (video) => {
   videoWidth = video.videoWidth;
   videoHeight = video.videoHeight;
@@ -30,32 +34,41 @@ const landmarksRealTime = async (video) => {
 
   const frameLandmarks = async () => {
     ctx.drawImage(video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
-    const predictions = await model.estimateHands(video);
-    if (predictions.length > 0) {
-      const result = predictions[0].landmarks;
 
-      // ctx.strokeStyle = "red";
-      // ctx.fillStyle = "red";
-      // drawKeypoints(ctx, result, predictions[0].annotations);
+    if (counter === 0) {
+      const predictions = await model.estimateHands(video);
+      if (predictions.length > 0) {
+        const result = predictions[0].landmarks;
 
-      const proportions = getProportionsLimited(result);
-      const output = net.run(proportions);
-      const { rock, paper } = output;
-      const maxResult = Math.max(rock, paper);
+        // ctx.strokeStyle = "red";
+        // ctx.fillStyle = "red";
+        // drawKeypoints(ctx, result, predictions[0].annotations);
 
-      if (maxResult === rock) {
-        // todo
-      } else if (maxResult === paper && paper > 0.85) {
-        const centalHandPoint = getCentralHandPoint(result);
-        const newY = (960 * centalHandPoint.y / VIDEO_HEIGHT) - 240;
-        myGamePiece.y = newY;
+        const proportions = getProportionsLimited(result);
+        const output = net.run(proportions);
+        const { rock, paper } = output;
+        const maxResult = Math.max(rock, paper);
 
-        ctx.strokeStyle = "blue";
-        ctx.fillStyle = "blue";
-        ctx.beginPath();
-        ctx.arc(centalHandPoint.x, centalHandPoint.y, 10, 0, 2 * Math.PI);
-        ctx.fill();
+        if (maxResult === rock) {
+          // todo
+        } else if (maxResult === paper && paper > 0.85) {
+          centalHandPoint = getCentralHandPoint(result);
+          const newY = (960 * centalHandPoint.y / VIDEO_HEIGHT) - 240;
+          myGamePiece.y = newY;
+        }
       }
+
+      counter = 8;
+    } else {
+      counter -= 1;
+    }
+
+    if (centalHandPoint) {
+      ctx.strokeStyle = "blue";
+      ctx.fillStyle = "blue";
+      ctx.beginPath();
+      ctx.arc(centalHandPoint.x, centalHandPoint.y, 10, 0, 2 * Math.PI);
+      ctx.fill();
     }
 
     requestAnimationFrame(frameLandmarks);
